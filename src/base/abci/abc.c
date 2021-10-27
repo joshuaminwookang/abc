@@ -396,6 +396,7 @@ static int Abc_CommandAbc9WriteVer           ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Write              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9WriteLut           ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Ps                 ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9PFeatures          ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9PFan               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9PSig               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Status             ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -578,6 +579,7 @@ static int Abc_CommandAbc9Gen                ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Cfs                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 
 static int Abc_CommandAbc9Test               ( Abc_Frame_t * pAbc, int argc, char ** argv );
+extern int Abc_CommandBayestune              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 
 extern int Abc_CommandAbcLivenessToSafety    ( Abc_Frame_t * pAbc, int argc, char ** argv );
 extern int Abc_CommandAbcLivenessToSafetySim ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1139,6 +1141,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&write",        Abc_CommandAbc9Write,        0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&wlut",         Abc_CommandAbc9WriteLut,     0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&ps",           Abc_CommandAbc9Ps,           0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&pfeatures",    Abc_CommandAbc9PFeatures,    0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&pfan",         Abc_CommandAbc9PFan,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&psig",         Abc_CommandAbc9PSig,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&status",       Abc_CommandAbc9Status,       0 );
@@ -1327,6 +1330,8 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&cfs",          Abc_CommandAbc9Cfs,                    0 );
 
     Cmd_CommandAdd( pAbc, "ABC9",         "&test",         Abc_CommandAbc9Test,         0 );
+    Cmd_CommandAdd( pAbc, "Tuning",     "ftune",           Abc_CommandBayestune,                   0 );
+
     {
 //        extern Mf_ManTruthCount();
 //        Mf_ManTruthCount();
@@ -1346,6 +1351,180 @@ void Abc_Init( Abc_Frame_t * pAbc )
 //    if ( Sdm_ManCanRead() )
 //        Sdm_ManRead();
 }
+
+/**Function*************************************************************
+
+  Synopsis    []
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+int Abc_CommandBayestune( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    extern void bayes_flow_tune(char* Design, int repeats, int prefix_pos, int target, int nSamples, int mab_iter, int fForget, int fSoftmax, char* LIB, char* opts) ;
+    int c = 0;
+    int fRepeat = 1;
+    int fPrefix = 1;
+    int fSample = 5;
+    int fForget = 0;
+    int fSoftmax = 0;
+    int fOpt    = 1; // 0:area 1:delay 3:clauses 5: sta
+    int fMABiter= 0;
+    char *design = NULL; 
+    char *lib = NULL; 
+    char *customized_opts = NULL; 
+    Extra_UtilGetoptReset();
+    
+    if(argc <= 4)
+        goto usage;
+    while ( ( c = Extra_UtilGetopt( argc, argv, "drtfpisLShC" ) ) != EOF )
+    {
+        switch ( c )
+        {
+        case 'd':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-d\" should be followed by an string.\n" );
+                goto usage;
+            }
+            design = argv[globalUtilOptind];
+            globalUtilOptind++;
+            break;
+        case 'r':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-r\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            fRepeat = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            break;
+        case 't':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-t\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            fOpt = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            break;
+        case 's':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-t\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            fSample = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            break;
+        case 'f':
+            fForget ^= 1;
+            break;
+        case 'S':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-S\" should be followed by integers in {0,1,2}\n" );
+                goto usage;
+            }
+            fSoftmax = atoi(argv[globalUtilOptind]);
+            if (fSoftmax!=1 && fSoftmax!=2 && fSoftmax!=0){
+                Abc_Print( -1, "Command line switch \"-S\" should be followed by 1 (Softmax) or 2 (LogSoftmax)\n" );
+                goto usage;
+            }
+            globalUtilOptind++;
+            break;
+        case 'p':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-p\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            fPrefix = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            break;
+        case 'i':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-i\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            fMABiter = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            break;
+        case 'L':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-L\" should be followed by an string.\n" );
+                goto usage;
+            }
+            lib = argv[globalUtilOptind];
+            globalUtilOptind++;
+            break;
+        case 'C':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-C\" should be followed by an string.\n" );
+                goto usage;
+            }
+            customized_opts = argv[globalUtilOptind];
+            globalUtilOptind++;
+            break;
+        case 'h':
+            goto usage;
+        default:
+            goto usage;
+        }
+    }
+    if ( fOpt<0 || fOpt>9 ){
+     printf("Error: Target entered is not supported; Type ftune -h for help: %d\n", fOpt);
+     return 1;
+    }
+
+    if ( (fOpt == 2 && lib==NULL) || (fOpt == 3 && lib==NULL))    {
+       printf("Error: Liberty file has to be included in order to optimize [STA delay] or [STA area]\n");
+       return 1; 
+    }
+    //extern void bayes_flow_tune(char* design, int repeats, int target, int nSamples, int mab_iter, int fForget, char* lib);
+    printf("Your current setups:\n");
+    printf("Design = %s, target = %d, repeats = %d, prefix = %d, forget = %d, iteration = %d, nSample = %d, liberty = %s\n", 
+            design, fOpt, fRepeat, fPrefix, fForget, fMABiter, fSample , lib);
+    bayes_flow_tune(design, fRepeat, fPrefix, fOpt, fSample, fMABiter, fForget, fSoftmax, lib, customized_opts);
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: ftune [drtfpihSL]\n" );
+    Abc_Print( -2, "\t      flowtune(ftune): Multi-Armed Bandit (MAB) synthesis flow tuning for Logic Minimization\n" );
+    Abc_Print( -2, "\t-t    : Targeted metric (default = 0, i.e., AIG Minization targeting number of AIG nodes)\n");
+    Abc_Print( -2, "\t      : t=0 AIG Minization - Minimizing AIG nodes                       :  ftune -d i10.aig -r 4 -t 0 -p 1 -i 10 -s 5 -L [other options]\n");
+    Abc_Print( -2, "\t      : t=1 AIG Minization - minimizing AIG levels                      :  ftune -d i10.aig -r 4 -t 1 -p 1 -i 10 -s 5 -L [other options]\n");
+    Abc_Print( -2, "\t      : t=2 Technology mapping (w Gate Sizing + STA) Min STA-Delay      :  ftune -d i10.aig -r 4 -t 2 -p 1 -i 10 -s 5 -L your.lib(Liberty) [other options]\n");
+    Abc_Print( -2, "\t      : t=3 Technology mapping (w Gate Sizing + STA) Min Area           :  ftune -d i10.aig -r 4 -t 3 -p 1 -i 10 -s 5 -L your.lib(Liberty) [other options]\n");
+    Abc_Print( -2, "\t      : t=4 FPGA Mapping - Miniziming Number of 6-input LUTs            :  ftune -d i10.aig -r 4 -t 4 -p 1 -i 10 -s 5 [other options]\n");
+    Abc_Print( -2, "\t      : t=5 FPGA Mapping - Miniziming Levels of 6-input LUT network     :  ftune -d i10.aig -r 4 -t 5 -p 1 -i 10 -s 5 [other options]\n");
+    Abc_Print( -2, "\t      : t=6 SAT (CNF) Minization - Miniziming Number of Clauses         :  ftune -d cnf.aig -r 4 -t 6 -p 1 -i 10 -s 5 [other options]\n");
+    Abc_Print( -2, "\t      : t=7 SAT (CNF) Minization - Miniziming Number of literals        :  ftune -d cnf.aig -r 4 -t 7 -p 1 -i 10 -s 5 [other options]\n");
+    Abc_Print( -2, "\t      : t=8 Regular Technology mapping using GENLIB (map) Min Delay     :  ftune -d i10.aig -r 4 -t 8 -p 1 -i 10 -s 5 -L your.genlib(GENLIB) [other options]\n");
+    Abc_Print( -2, "\t      : t=9 Regular Technology mapping using GENLIB (map) Min Area      :  ftune -d i10.aig -r 4 -t 9 -p 1 -i 10 -s 5 -L your.genlib(GENLIB) [other options]\n");
+    Abc_Print( -2, "\t-h    : Print the command usage\n");
+    Abc_Print( -2, "\t-r    : Number of appearances of each synthesis command (default = 3)\n");
+    Abc_Print( -2, "\t-p    : Factor of number of Arms (default = 1)\n");
+    Abc_Print( -2, "\t-i    : Number of MAB iterations (default = 10)\n");
+    Abc_Print( -2, "\t-s    : Number of MAB sampling for each iteration per Arm (default = 5)\n");
+    Abc_Print( -2, "\t-f    : Toggle using long-short-term memory for probability matching (default=FALSE)\n");
+    Abc_Print( -2, "\t-C    : Customize the logic transformations (commands) for tuning instead of default commands. \n\t\t Example 1:  -C b;rw;rwz;rf (your flow will use these 4 opts).\n \
+			\n\t\t Example 2: -C b;rw;rwz;rf;your_cmd (You can define your new command in abc.rc namely your_cmd and tunes for these 4 opts + your_cmd).\n");
+    Abc_Print( -2, "\t-S    : Toggle using Softmax() or LogSoftmax() for finalizing samples at each iteration (default=FALSE)\n");
+    Abc_Print( -2, "\t\t    -S 0 : Using winning rate Pr\n");
+    Abc_Print( -2, "\t\t    -S 1 : Using Softmax()\n");
+    Abc_Print( -2, "\t\t    -S 2 : Using LogSoftmax()\n");
+    Abc_Print( -2, "\t-L    : Liberty or GENLIB file. Required for Technology mapping tuning (t=2,3,8,9) \n");
+    return 1;
+}
+
 
 /**Function*************************************************************
 
@@ -49405,6 +49584,123 @@ usage:
     Abc_Print( -2, "\t-s    : toggle enable (yes) vs. disable (no) [default = %s]\n", fSwitch? "yes": "no" );
     Abc_Print( -2, "\t-v    : toggle printing verbose information [default = %s]\n", fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h    : print the command usage\n");
+    return 1;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [] 
+
+  Description [custom print function]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+int Abc_CommandAbc9PFeatures( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    Gps_Par_t Pars, * pPars = &Pars;
+    int c, fBest = 0;
+    memset( pPars, 0, sizeof(Gps_Par_t) );
+    Extra_UtilGetoptReset();
+    while ( ( c = Extra_UtilGetopt( argc, argv, "h" ) ) != EOF )
+    {
+        switch ( c )
+        {
+        // case 't':
+        //     pPars->fTents ^= 1;
+        //     break;
+        // case 'p':
+        //     pPars->fSwitch ^= 1;
+        //     break;
+        // case 'c':
+        //     pPars->fCut ^= 1;
+        //     break;
+        // case 'n':
+        //     pPars->fNpn ^= 1;
+        //     break;
+        // case 'l':
+        //     pPars->fLutProf ^= 1;
+        //     break;
+        // case 'm':
+        //     pPars->fMuxXor ^= 1;
+        //     break;
+        // case 'a':
+        //     pPars->fMiter ^= 1;
+        //     break;
+        // case 's':
+        //     pPars->fSlacks ^= 1;
+        //     break;
+        // case 'z':
+        //     pPars->fSkipMap ^= 1;
+        //     break;
+        // case 'x':
+        //     pPars->fNoColor ^= 1;
+        //     break;
+        // case 'D':
+        //     if ( globalUtilOptind >= argc )
+        //     {
+        //         Abc_Print( -1, "Command line switch \"-D\" should be followed by a file name.\n" );
+        //         goto usage;
+        //     }
+        //     pPars->pDumpFile = argv[globalUtilOptind];
+        //     globalUtilOptind++;
+        //     break;
+        // case 'b':
+        //     fBest ^= 1;
+        //     break;
+        case 'h':
+            goto usage;
+        default:
+            goto usage;
+        }
+    }
+    pPars->fMuxXor = 1; pPars->fCut = 1; pPars->fLutProf = 1;pPars->fSlacks = 1;
+    if ( globalUtilOptind >= argc )
+    {
+                Abc_Print( -1, "Command line switch \"-D\" should be followed by a file name.\n" );
+                goto usage;
+    }
+    pPars->pDumpFile = argv[globalUtilOptind];
+    globalUtilOptind++;
+
+    if ( fBest )
+    {
+        if ( pAbc->pGiaBest == NULL )
+        {
+            Abc_Print( -1, "Abc_CommandAbc9PFeatures(): There is no AIG.\n" );
+            return 1;
+        }
+        Gia_ManPrintStats( pAbc->pGiaBest, pPars );
+    }
+    else
+    {
+        if ( pAbc->pGia == NULL )
+        {
+            Abc_Print( -1, "Abc_CommandAbc9PFeatures(): There is no AIG.\n" );
+            return 1;
+        }
+        Gia_ManPrintStats( pAbc->pGia, pPars );
+    }
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: &pfeatures file \n" );
+    Abc_Print( -2, "\t          dumps circuit features of current AIG to file\n" );
+    // Abc_Print( -2, "\t-t      : toggle printing BMC tents [default = %s]\n",                pPars->fTents? "yes": "no" );
+    // Abc_Print( -2, "\t-p      : toggle printing switching activity [default = %s]\n",       pPars->fSwitch? "yes": "no" );
+    // Abc_Print( -2, "\t-c      : toggle printing the size of frontier cut [default = %s]\n", pPars->fCut? "yes": "no" );
+    // Abc_Print( -2, "\t-n      : toggle printing NPN classes of functions [default = %s]\n", pPars->fNpn? "yes": "no" );
+    // Abc_Print( -2, "\t-l      : toggle printing LUT size profile [default = %s]\n",         pPars->fLutProf? "yes": "no" );
+    // Abc_Print( -2, "\t-m      : toggle printing MUX/XOR statistics [default = %s]\n",       pPars->fMuxXor? "yes": "no" );
+    // Abc_Print( -2, "\t-a      : toggle printing miter statistics [default = %s]\n",         pPars->fMiter? "yes": "no" );
+    // Abc_Print( -2, "\t-s      : toggle printing slack distribution [default = %s]\n",       pPars->fSlacks? "yes": "no" );
+    // Abc_Print( -2, "\t-z      : skip mapping statistics even if mapped [default = %s]\n",   pPars->fSkipMap? "yes": "no" );
+    // Abc_Print( -2, "\t-n      : toggle using no color in the printout [default = %s]\n",    pPars->fNoColor? "yes": "no" );
+    // Abc_Print( -2, "\t-x      : toggle printing saved AIG statistics [default = %s]\n",     fBest? "yes": "no" );
+    // Abc_Print( -2, "\t-D file : file name to dump statistics [default = none]\n" );
+    Abc_Print( -2, "\t-h      : print the command usage\n");
     return 1;
 }
 
