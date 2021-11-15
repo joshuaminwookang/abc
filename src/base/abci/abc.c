@@ -397,6 +397,7 @@ static int Abc_CommandAbc9Write              ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9WriteLut           ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Ps                 ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9PFeatures          ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9PFanStats          ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9PFan               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9PSig               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Status             ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1142,6 +1143,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&wlut",         Abc_CommandAbc9WriteLut,     0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&ps",           Abc_CommandAbc9Ps,           0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&pfeatures",    Abc_CommandAbc9PFeatures,    0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&pfanstats",    Abc_CommandAbc9PFanStats,    0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&pfan",         Abc_CommandAbc9PFan,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&psig",         Abc_CommandAbc9PSig,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&status",       Abc_CommandAbc9Status,       0 );
@@ -49591,7 +49593,7 @@ usage:
 
   Synopsis    [] 
 
-  Description [custom print function]
+  Description [WIP: custom print function]
 
   SideEffects []
 
@@ -49601,55 +49603,13 @@ usage:
 int Abc_CommandAbc9PFeatures( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Gps_Par_t Pars, * pPars = &Pars;
-    int c, fBest = 0;
+    int c = 0;
     memset( pPars, 0, sizeof(Gps_Par_t) );
     Extra_UtilGetoptReset();
     while ( ( c = Extra_UtilGetopt( argc, argv, "h" ) ) != EOF )
     {
         switch ( c )
         {
-        // case 't':
-        //     pPars->fTents ^= 1;
-        //     break;
-        // case 'p':
-        //     pPars->fSwitch ^= 1;
-        //     break;
-        // case 'c':
-        //     pPars->fCut ^= 1;
-        //     break;
-        // case 'n':
-        //     pPars->fNpn ^= 1;
-        //     break;
-        // case 'l':
-        //     pPars->fLutProf ^= 1;
-        //     break;
-        // case 'm':
-        //     pPars->fMuxXor ^= 1;
-        //     break;
-        // case 'a':
-        //     pPars->fMiter ^= 1;
-        //     break;
-        // case 's':
-        //     pPars->fSlacks ^= 1;
-        //     break;
-        // case 'z':
-        //     pPars->fSkipMap ^= 1;
-        //     break;
-        // case 'x':
-        //     pPars->fNoColor ^= 1;
-        //     break;
-        // case 'D':
-        //     if ( globalUtilOptind >= argc )
-        //     {
-        //         Abc_Print( -1, "Command line switch \"-D\" should be followed by a file name.\n" );
-        //         goto usage;
-        //     }
-        //     pPars->pDumpFile = argv[globalUtilOptind];
-        //     globalUtilOptind++;
-        //     break;
-        // case 'b':
-        //     fBest ^= 1;
-        //     break;
         case 'h':
             goto usage;
         default:
@@ -49665,41 +49625,59 @@ int Abc_CommandAbc9PFeatures( Abc_Frame_t * pAbc, int argc, char ** argv )
     pPars->pDumpFile = argv[globalUtilOptind];
     globalUtilOptind++;
 
-    if ( fBest )
+    if ( pAbc->pGia == NULL ) 
     {
-        if ( pAbc->pGiaBest == NULL )
-        {
-            Abc_Print( -1, "Abc_CommandAbc9PFeatures(): There is no AIG.\n" );
-            return 1;
-        }
-        Gia_ManPrintStats( pAbc->pGiaBest, pPars );
+        
+        Abc_Print( -1, "Abc_CommandAbc9PFeatures(): There is no AIG.\n" );
+        return 1;
     }
-    else
-    {
-        if ( pAbc->pGia == NULL )
-        {
-            Abc_Print( -1, "Abc_CommandAbc9PFeatures(): There is no AIG.\n" );
-            return 1;
-        }
-        Gia_ManPrintStats( pAbc->pGia, pPars );
-    }
+    Gia_ManLogAigFullStats( pAbc->pGia, pPars );
     return 0;
 
 usage:
     Abc_Print( -2, "usage: &pfeatures file \n" );
     Abc_Print( -2, "\t          dumps circuit features of current AIG to file\n" );
-    // Abc_Print( -2, "\t-t      : toggle printing BMC tents [default = %s]\n",                pPars->fTents? "yes": "no" );
-    // Abc_Print( -2, "\t-p      : toggle printing switching activity [default = %s]\n",       pPars->fSwitch? "yes": "no" );
-    // Abc_Print( -2, "\t-c      : toggle printing the size of frontier cut [default = %s]\n", pPars->fCut? "yes": "no" );
-    // Abc_Print( -2, "\t-n      : toggle printing NPN classes of functions [default = %s]\n", pPars->fNpn? "yes": "no" );
-    // Abc_Print( -2, "\t-l      : toggle printing LUT size profile [default = %s]\n",         pPars->fLutProf? "yes": "no" );
-    // Abc_Print( -2, "\t-m      : toggle printing MUX/XOR statistics [default = %s]\n",       pPars->fMuxXor? "yes": "no" );
-    // Abc_Print( -2, "\t-a      : toggle printing miter statistics [default = %s]\n",         pPars->fMiter? "yes": "no" );
-    // Abc_Print( -2, "\t-s      : toggle printing slack distribution [default = %s]\n",       pPars->fSlacks? "yes": "no" );
-    // Abc_Print( -2, "\t-z      : skip mapping statistics even if mapped [default = %s]\n",   pPars->fSkipMap? "yes": "no" );
-    // Abc_Print( -2, "\t-n      : toggle using no color in the printout [default = %s]\n",    pPars->fNoColor? "yes": "no" );
-    // Abc_Print( -2, "\t-x      : toggle printing saved AIG statistics [default = %s]\n",     fBest? "yes": "no" );
-    // Abc_Print( -2, "\t-D file : file name to dump statistics [default = none]\n" );
+    Abc_Print( -2, "\t-h      : print the command usage\n");
+    return 1;
+}
+
+int Abc_CommandAbc9PFanStats( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    Gps_Par_t Pars, * pPars = &Pars;
+    int c = 0;
+    memset( pPars, 0, sizeof(Gps_Par_t) );
+    Extra_UtilGetoptReset();
+    while ( ( c = Extra_UtilGetopt( argc, argv, "h" ) ) != EOF )
+    {
+        switch ( c )
+        {
+        case 'h':
+            goto usage;
+        default:
+            goto usage;
+        }
+    }
+    pPars->fMuxXor = 1; pPars->fCut = 1; pPars->fLutProf = 1;pPars->fSlacks = 1;
+    if ( globalUtilOptind >= argc )
+    {
+                Abc_Print( -1, "Command line switch \"-D\" should be followed by a file name.\n" );
+                goto usage;
+    }
+    pPars->pDumpFile = argv[globalUtilOptind];
+    globalUtilOptind++;
+
+    if ( pAbc->pGia == NULL ) 
+    {
+        
+        Abc_Print( -1, "Abc_CommandAbc9PFanStats(): There is no AIG.\n" );
+        return 1;
+    }
+    Gia_ManPrintFanioDump( pAbc->pGia, pPars);
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: &pFanStats file \n" );
+    Abc_Print( -2, "\t          dumps circuit features of current AIG to file\n" );
     Abc_Print( -2, "\t-h      : print the command usage\n");
     return 1;
 }

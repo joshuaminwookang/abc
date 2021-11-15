@@ -1277,6 +1277,7 @@ extern Vec_Int_t *         Cbs_ReadModel( Cbs_Man_t * p );
 extern Vec_Int_t *         Tas_ManSolveMiterNc( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int fVerbose );
 /*=== giaCof.c =============================================================*/
 extern void                Gia_ManPrintFanio( Gia_Man_t * pGia, int nNodes );
+extern void                Gia_ManPrintFanioDump( Gia_Man_t * pGia, Gps_Par_t * pPars );
 extern Gia_Man_t *         Gia_ManDupCof( Gia_Man_t * p, int iVar );
 extern Gia_Man_t *         Gia_ManDupCofAllInt( Gia_Man_t * p, Vec_Int_t * vSigs, int fVerbose );
 extern Gia_Man_t *         Gia_ManDupCofAll( Gia_Man_t * p, int nFanLim, int fVerbose );
@@ -1507,6 +1508,7 @@ extern void                Gia_ManStop( Gia_Man_t * p );
 extern void                Gia_ManStopP( Gia_Man_t ** p );  
 extern double              Gia_ManMemory( Gia_Man_t * p );
 extern void                Gia_ManPrintStats( Gia_Man_t * p, Gps_Par_t * pPars ); 
+extern void                Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars);
 extern void                Gia_ManPrintStatsShort( Gia_Man_t * p ); 
 extern void                Gia_ManPrintMiterStatus( Gia_Man_t * p ); 
 extern void                Gia_ManPrintStatsMiter( Gia_Man_t * p, int fVerbose );

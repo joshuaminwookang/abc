@@ -702,7 +702,7 @@ void Cof_ManPrintFanio( Cof_Man_t * p )
         if ( k < 10 )
             printf( "%15d : ", k );
         else
-        {
+        {   
             sprintf( Buffer, "%d - %d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
             printf( "%15s : ", Buffer );
         }
@@ -730,6 +730,194 @@ void Cof_ManPrintFanio( Cof_Man_t * p )
         nFaninsMax,  1.0*nFaninsAll /Cof_ManNodeNum(p), 
         nFanoutsMax, 1.0*nFanoutsAll/Cof_ManNodeNum(p), 
         nMffcsMax,   1.0*nMffcsAll  /nMffcNodes  );
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Prints the distribution of fanins/fanouts in the network.]
+
+  Description []
+               
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
+{
+    char Buffer[100];
+    Cof_Obj_t * pNode;
+    Vec_Int_t * vFanins, * vFanouts, * vMffcs;
+    int nFanins, nFanouts, nMffcs, nFaninsMax, nFanoutsMax, nMffcsMax, nFaninsAll, nFanoutsAll, nMffcsAll;
+    int i, k, nSizeMax, nMffcNodes = 0;
+
+    // determine the largest fanin and fanout
+    nFaninsMax = nFanoutsMax = nMffcsMax = 0;
+    nFaninsAll = nFanoutsAll = nMffcsAll = 0;
+    Cof_ManForEachNode( p, pNode, i )
+    {
+        if ( i == 0 ) continue;
+        nFanins  = Cof_ObjFaninNum(pNode);
+        nFanouts = Cof_ObjFanoutNum(pNode);
+        nMffcs   = pNode->nFanouts > 1 ? Cof_ObjMffcSize(pNode) : 0;
+        nFaninsAll  += nFanins;
+        nFanoutsAll += nFanouts;
+        nMffcsAll   += nMffcs;
+        nFaninsMax   = Abc_MaxInt( nFaninsMax,  nFanins );
+        nFanoutsMax  = Abc_MaxInt( nFanoutsMax, nFanouts );
+        nMffcsMax    = Abc_MaxInt( nMffcsMax,   nMffcs );
+    }
+
+    // allocate storage for fanin/fanout numbers
+    nSizeMax = Abc_MaxInt( 10 * (Abc_Base10Log(nFaninsMax) + 1), 10 * (Abc_Base10Log(nFanoutsMax) + 1) );
+    nSizeMax = Abc_MaxInt( 10 * (Abc_Base10Log(nMffcsMax) + 1),  nSizeMax );
+    vFanins  = Vec_IntStart( nSizeMax );
+    vFanouts = Vec_IntStart( nSizeMax );
+    vMffcs   = Vec_IntStart( nSizeMax );
+
+    // count the number of fanins and fanouts
+    Cof_ManForEachNode( p, pNode, i )
+    {
+        if ( i == 0 ) continue;
+        nFanins  = Cof_ObjFaninNum(pNode);
+        nFanouts = Cof_ObjFanoutNum(pNode);
+        nMffcs   = pNode->nFanouts > 1 ? Cof_ObjMffcSize(pNode) : 0;
+
+        if ( nFanins < 10 )
+            Vec_IntAddToEntry( vFanins, nFanins, 1 );
+        else if ( nFanins < 100 )
+            Vec_IntAddToEntry( vFanins, 10 + nFanins/10, 1 );
+        else if ( nFanins < 1000 )
+            Vec_IntAddToEntry( vFanins, 20 + nFanins/100, 1 );
+        else if ( nFanins < 10000 )
+            Vec_IntAddToEntry( vFanins, 30 + nFanins/1000, 1 );
+        else if ( nFanins < 100000 )
+            Vec_IntAddToEntry( vFanins, 40 + nFanins/10000, 1 );
+        else if ( nFanins < 1000000 )
+            Vec_IntAddToEntry( vFanins, 50 + nFanins/100000, 1 );
+        else if ( nFanins < 10000000 )
+            Vec_IntAddToEntry( vFanins, 60 + nFanins/1000000, 1 );
+
+        if ( nFanouts < 10 )
+            Vec_IntAddToEntry( vFanouts, nFanouts, 1 );
+        else if ( nFanouts < 100 )
+            Vec_IntAddToEntry( vFanouts, 10 + nFanouts/10, 1 );
+        else if ( nFanouts < 1000 )
+            Vec_IntAddToEntry( vFanouts, 20 + nFanouts/100, 1 );
+        else if ( nFanouts < 10000 )
+            Vec_IntAddToEntry( vFanouts, 30 + nFanouts/1000, 1 );
+        else if ( nFanouts < 100000 )
+            Vec_IntAddToEntry( vFanouts, 40 + nFanouts/10000, 1 );
+        else if ( nFanouts < 1000000 )
+            Vec_IntAddToEntry( vFanouts, 50 + nFanouts/100000, 1 );
+        else if ( nFanouts < 10000000 )
+            Vec_IntAddToEntry( vFanouts, 60 + nFanouts/1000000, 1 );
+       
+        if ( nMffcs == 0 )
+            continue;
+        nMffcNodes++;
+
+        if ( nMffcs < 10 )
+            Vec_IntAddToEntry( vMffcs, nMffcs, 1 );
+        else if ( nMffcs < 100 )
+            Vec_IntAddToEntry( vMffcs, 10 + nMffcs/10, 1 );
+        else if ( nMffcs < 1000 )
+            Vec_IntAddToEntry( vMffcs, 20 + nMffcs/100, 1 );
+        else if ( nMffcs < 10000 )
+            Vec_IntAddToEntry( vMffcs, 30 + nMffcs/1000, 1 );
+        else if ( nMffcs < 100000 )
+            Vec_IntAddToEntry( vMffcs, 40 + nMffcs/10000, 1 );
+        else if ( nMffcs < 1000000 )
+            Vec_IntAddToEntry( vMffcs, 50 + nMffcs/100000, 1 );
+        else if ( nMffcs < 10000000 )
+            Vec_IntAddToEntry( vMffcs, 60 + nMffcs/1000000, 1 );
+    }
+    FILE * pTable = fopen( pPars->pDumpFile, "wb" );
+    fprintf( pTable, "{\n" );
+    // fprintf( pTable, "    \"name\" : \"%s\",\n", p->pName );
+
+    // printf( "The distribution of fanins, fanouts. and MFFCs in the network:\n" );
+    // printf( "         Number    Nodes with fanin   Nodes with fanout   Nodes with MFFC\n" );
+    fprintf( pTable, "    \"fanin\" : {\n");
+    for ( k = 0; k < nSizeMax; k++ )
+    {
+        if ( k < 10 )
+            fprintf( pTable, "        \"%d\" : %11d,\n", k, vFanins->pArray[k]);
+        else
+        {
+            if (k%10 == 0)
+                continue;
+            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
+            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+        }
+    }
+    fprintf( pTable, "    },\n");
+    fprintf( pTable, "    \"fanout\" : {\n");
+    for ( k = 0; k < nSizeMax; k++ )
+    {
+        if ( k < 10 )
+            fprintf( pTable, "        \"%d\" : %11d,\n", k, vFanouts->pArray[k]);
+        else
+        {
+            if (k%10 == 0)
+                continue;
+            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
+            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+        }
+    }
+    fprintf( pTable, "    },\n");
+    fprintf( pTable, "    \"mffc\" : {\n");
+    for ( k = 0; k < nSizeMax; k++ )
+    {
+        if ( k < 10 )
+            fprintf( pTable, "        \"%d\" : %11d,\n", k, vMffcs->pArray[k]);
+        else
+        {
+            if (k%10 == 0)
+                continue;
+            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
+            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+        }
+    }
+    fprintf( pTable, "    },\n");
+    fprintf( pTable, "    \"fanin_max\" : %d,\n",    nFaninsMax);
+    fprintf( pTable, "    \"fanin_avg\" : %.2f,\n",    1.0*nFaninsAll /Cof_ManNodeNum(p));
+    fprintf( pTable, "    \"fanout_max\" : %d,\n",   nFanoutsMax);
+    fprintf( pTable, "    \"fanout_avg\" : %.2f,\n",   1.0*nFanoutsAll/Cof_ManNodeNum(p));
+    fprintf( pTable, "    \"mffc_max\" : %d,\n",     nMffcsMax);
+    fprintf( pTable, "    \"mffc_avg\" : %.2f,\n",     1.0*nMffcsAll/nMffcsAll);
+    Vec_IntFree( vFanins );
+    Vec_IntFree( vFanouts );
+    Vec_IntFree( vMffcs );
+    fprintf( pTable, "}\n" );
+    fclose( pTable );
+    // printf( "Fanins: Max = %d. Ave = %.2f.  Fanouts: Max = %d. Ave =  %.2f.  MFFCs: Max = %d. Ave =  %.2f.\n", 
+    //     nFaninsMax,  1.0*nFaninsAll /Cof_ManNodeNum(p), 
+    //     nFanoutsMax, 1.0*nFanoutsAll/Cof_ManNodeNum(p), 
+    //     nMffcsMax,   1.0*nMffcsAll  /nMffcsAll  );
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Returns sorted array of node handles with largest fanout.]
+
+  Description []
+               
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Gia_ManPrintFanioDump( Gia_Man_t * pGia, Gps_Par_t * pPars )
+{
+    Cof_Man_t * p;
+    // abctime clk = Abc_Clock();
+    p = Cof_ManCreateLogicSimple( pGia );
+    p->nLevels = 1 + Gia_ManLevelNum( pGia );
+    p->pLevels = ABC_CALLOC( int, p->nLevels );
+    Cof_ManPrintFanioDump( p, pPars);
+
+    Cof_ManStop( p );
 }
 
 /**Function*************************************************************

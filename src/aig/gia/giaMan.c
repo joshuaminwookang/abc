@@ -465,6 +465,8 @@ void Gia_ManLogAigStats( Gia_Man_t * p, char * pDumpFile )
     fclose( pTable );
 }
 */
+
+
 void Gia_ManLogAigStats( Gia_Man_t * p, char * pDumpFile )
 {
     FILE * pTable = fopen( pDumpFile, "wb" );
@@ -474,6 +476,172 @@ void Gia_ManLogAigStats( Gia_Man_t * p, char * pDumpFile )
     fprintf( pTable, "    \"output\" : %d,\n",   Gia_ManCoNum(p) );
     fprintf( pTable, "    \"and\" : %d,\n",      Gia_ManAndNum(p) );
     fprintf( pTable, "    \"level\" : %d\n",     Gia_ManLevelNum(p) );
+    fprintf( pTable, "}\n" );
+    fclose( pTable );
+}
+
+Vec_Int_t * Gia_ManDfsSlacks( Gia_Man_t * p );
+
+void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
+{
+    extern float Gia_ManLevelAve( Gia_Man_t * p );
+    extern void Gia_ManPrintGetMuxFanins( Gia_Man_t * p, Gia_Obj_t * pObj, int * pFanins );
+
+    // Open file to write stats to
+    FILE * pTable = fopen( pPars->pDumpFile, "wb" );
+    int nAnds, nMuxes, nXors, nTotal;
+    if ( p->pMuxes )
+    {
+        nAnds  = Gia_ManAndNotBufNum(p)-Gia_ManXorNum(p)-Gia_ManMuxNum(p);
+        nXors  = Gia_ManXorNum(p);
+        nMuxes = Gia_ManMuxNum(p);
+        nTotal = nAnds + 3*nXors + 3*nMuxes;
+    }
+    else 
+    {
+        Gia_ManCountMuxXor( p, &nMuxes, &nXors );
+        nAnds  = Gia_ManAndNotBufNum(p) - 3*nMuxes - 3*nXors;
+        nTotal = Gia_ManAndNotBufNum(p);
+    }
+    
+    // Write macro AIG statistics, including xor/mux/and distribution
+    fprintf( pTable, "{\n" );
+    fprintf( pTable, "    \"name\" : \"%s\",\n", p->pName );
+    fprintf( pTable, "    \"CI\" : %d,\n",          Gia_ManCiNum(p) );
+    fprintf( pTable, "    \"CO\" : %d,\n",          Gia_ManCoNum(p) );
+    fprintf( pTable, "    \"PI\" : %7d,\n",         Gia_ManPiNum(p) );
+    fprintf( pTable, "    \"PO\" : %7d,\n",         Gia_ManPoNum(p) );
+    // fprintf( pTable, "    \"and\" : %d,\n",      Gia_ManAndNum(p) );
+    fprintf( pTable, "    \"level\" : %d,\n",        Gia_ManLevelNum(p) );
+    fprintf( pTable, "    \"level_avg\" : %2.f,\n",  Gia_ManLevelAve(p) );
+    fprintf( pTable, "    \"cut\" : %d, %d,\n",     Gia_ManCrossCut(p, 0), Gia_ManCrossCut(p, 1));
+    fprintf( pTable, "    \"xor\" : %d,\n",          nXors );
+    fprintf( pTable, "    \"xor_ratio\" : %6.2f,\n",    300.0*nXors/nTotal );
+
+    fprintf( pTable, "    \"mux\" : %d,\n",          nMuxes );
+    fprintf( pTable, "    \"mux_ratio\" : %6.2f,\n",    300.0*nMuxes/nTotal );
+
+    fprintf( pTable, "    \"and\" : %d,\n",          nAnds );
+    fprintf( pTable, "    \"and_ratio\" : %6.2f,\n",    100.0*nAnds/nTotal );
+
+    fprintf( pTable, "    \"obj\" : %d,\n",          Gia_ManAndNotBufNum(p) );
+    
+
+    /*
+     * Write switching activity information
+     */
+    float SwiTotal = Gia_ManComputeSwitching( p, 48, 16, 0 );
+    fprintf( pTable, "    \"power\" : %8.1f,\n",     SwiTotal);
+
+    // BELOW: only execute for mapped networks
+    if ( !Gia_ManHasMapping(p) )
+    {
+        fprintf( pTable, "}\n" );
+        fclose( pTable );
+        return;
+    }
+
+    /*
+     * Write slack distribution
+     */
+    Vec_Int_t * vCounts, * vSlacks = Gia_ManDfsSlacks( p );
+    int i, Entry, nRange;
+    if ( Vec_IntSize(vSlacks) == 0 )
+    {
+        printf( "Network contains no internal objects.\n" );
+        Vec_IntFree( vSlacks );
+        return;
+    }
+    // compute slacks
+    Vec_IntForEachEntry( vSlacks, Entry, i )
+        if ( Entry != -1 )
+            Vec_IntWriteEntry( vSlacks, i, Entry/10 );
+    nRange = Vec_IntFindMax( vSlacks );
+    // count items
+    vCounts = Vec_IntStart( nRange + 1 );
+    Vec_IntForEachEntry( vSlacks, Entry, i )
+        if ( Entry != -1 )
+            Vec_IntAddToEntry( vCounts, Entry, 1 );
+    // print slack ranges
+    nTotal = Vec_IntSum( vCounts );
+    assert( nTotal > 0 );
+    fprintf( pTable, "    \"slack\" : {\n");
+    fprintf( pTable, "        \"total_nodes\" : %5d,\n",    nTotal);
+    Vec_IntForEachEntry( vCounts, Entry, i )
+    {
+        fprintf( pTable, "        \"%d_%d\" : %5d,\n",    10*i, 10*(i+1), Entry);
+    }
+    fprintf( pTable, "    }\n" );
+    Vec_IntFree( vSlacks );
+    Vec_IntFree( vCounts );
+
+    // save LUT mapping and LUT distribution profile
+    int fDisable2Lut = 1;
+    Gia_Obj_t * pObj;
+    int * pLevels;
+    int k, iFan, nLutSize = 0, nLuts = 0, nFanins = 0, LevelMax = 0, Ave = 0, nMuxF = 0;
+    pLevels = ABC_CALLOC( int, Gia_ManObjNum(p) );
+    Gia_ManForEachLut( p, i )
+    {
+        if ( Gia_ObjLutIsMux(p, i) && !(fDisable2Lut && Gia_ObjLutSize(p, i) == 2) )
+        {
+            int pFanins[3];
+            if ( Gia_ObjLutSize(p, i) == 3 )
+            {
+                Gia_ManPrintGetMuxFanins( p, Gia_ManObj(p, i), pFanins );
+                pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[pFanins[0]]+1 );
+                pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[pFanins[1]] );
+                pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[pFanins[2]] );
+            }
+            else if ( Gia_ObjLutSize(p, i) == 2 )
+            {
+                pObj = Gia_ManObj( p, i );
+                pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[Gia_ObjFaninId0(pObj, i)] );
+                pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[Gia_ObjFaninId1(pObj, i)] );
+            }
+            LevelMax = Abc_MaxInt( LevelMax, pLevels[i] );
+            nFanins++;
+            nMuxF++;
+            continue;
+        }
+        nLuts++;
+        nFanins += Gia_ObjLutSize(p, i);
+        nLutSize = Abc_MaxInt( nLutSize, Gia_ObjLutSize(p, i) );
+        Gia_LutForEachFanin( p, i, iFan, k )
+            pLevels[i] = Abc_MaxInt( pLevels[i], pLevels[iFan] );
+        pLevels[i]++;
+        LevelMax = Abc_MaxInt( LevelMax, pLevels[i] );
+    }
+    Gia_ManForEachCo( p, pObj, i )
+        Ave += pLevels[Gia_ObjFaninId0p(p, pObj)];
+    ABC_FREE( pLevels );
+
+    int nSizeMax, pCounts[33] = {0}, SizeAll = 0, NodeAll = 0;
+    nSizeMax = Gia_ManLutSizeMax( p );
+    if ( nSizeMax > 32 )
+    {
+        Abc_Print( 1, "The max LUT size (%d) is too large.\n", nSizeMax );
+        return;
+    }
+    Gia_ManForEachLut( p, i )
+        pCounts[ Gia_ObjLutSize(p, i) ]++;
+    for ( i = 0; i <= nSizeMax; i++ )
+    {
+        SizeAll += i * pCounts[i];
+        NodeAll += pCounts[i];
+    }
+    fprintf( pTable, "    \"LUT\" : {\n"                );
+
+    fprintf( pTable, "        \"total\" : %d,\n",     NodeAll );
+    for ( i = 2; i <= nSizeMax; i++ ) 
+    {
+        fprintf( pTable, "        \"%d_LUT\" : %d,\n",           i, pCounts[i] );
+        fprintf( pTable, "        \"%d_LUT_ratio\" : %.1f,\n",     i, 100.0*pCounts[i]/NodeAll );
+    }
+    fprintf( pTable, "        \"size_avg\" : %.2f,\n",           1.0*SizeAll/(NodeAll ? NodeAll : 1) );
+    fprintf( pTable, "        \"level\" : %5d,\n",          LevelMax );
+    fprintf( pTable, "        \"level_avg\" : %.2f,\n",     (float)Ave / Gia_ManCoNum(p) );
+    fprintf( pTable, "    },\n");
     fprintf( pTable, "}\n" );
     fclose( pTable );
 }
