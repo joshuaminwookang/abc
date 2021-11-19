@@ -848,7 +848,10 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
             if (k%10 == 0)
                 continue;
             sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+            if (k == nSizeMax -1)
+                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
+            else 
+                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
         }
     }
     fprintf( pTable, "    },\n");
@@ -862,7 +865,10 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
             if (k%10 == 0)
                 continue;
             sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+            if (k == nSizeMax -1)
+                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
+            else
+                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
         }
     }
     fprintf( pTable, "    },\n");
@@ -876,7 +882,10 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
             if (k%10 == 0)
                 continue;
             sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
+            if (k == nSizeMax -1)
+                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
+            else
+                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
         }
     }
     fprintf( pTable, "    },\n");
@@ -885,7 +894,7 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
     fprintf( pTable, "    \"fanout_max\" : %d,\n",   nFanoutsMax);
     fprintf( pTable, "    \"fanout_avg\" : %.2f,\n",   1.0*nFanoutsAll/Cof_ManNodeNum(p));
     fprintf( pTable, "    \"mffc_max\" : %d,\n",     nMffcsMax);
-    fprintf( pTable, "    \"mffc_avg\" : %.2f,\n"     1.0*nMffcsAll/nMffcsAll);
+    fprintf( pTable, "    \"mffc_avg\" : %.2f\n",     1.0*nMffcsAll/nMffcsAll);
     Vec_IntFree( vFanins );
     Vec_IntFree( vFanouts );
     Vec_IntFree( vMffcs );

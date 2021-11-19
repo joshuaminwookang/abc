@@ -570,8 +570,8 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     {
         fprintf( pTable, "        \"%d_%d\" : %5d,\n",    10*i, 10*(i+1), Entry);
     }
-    fprintf( pTable, "        \"total_nodes\" : %5d,\n",    nTotal);
-    fprintf( pTable, "    }\n" );
+    fprintf( pTable, "        \"total_nodes\" : %5d\n",    nTotal);
+    fprintf( pTable, "    },\n" );
     Vec_IntFree( vSlacks );
     Vec_IntFree( vCounts );
 
