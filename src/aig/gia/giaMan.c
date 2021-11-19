@@ -506,7 +506,7 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     
     // Write macro AIG statistics, including xor/mux/and distribution
     fprintf( pTable, "{\n" );
-    fprintf( pTable, "    \"name\" : \"%s\",\n", p->pName );
+    //    fprintf( pTable, "    \"name\" : \"%s\",\n", p->pName );
     fprintf( pTable, "    \"CI\" : %d,\n",          Gia_ManCiNum(p) );
     fprintf( pTable, "    \"CO\" : %d,\n",          Gia_ManCoNum(p) );
     fprintf( pTable, "    \"PI\" : %7d,\n",         Gia_ManPiNum(p) );
@@ -514,7 +514,7 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     // fprintf( pTable, "    \"and\" : %d,\n",      Gia_ManAndNum(p) );
     fprintf( pTable, "    \"level\" : %d,\n",        Gia_ManLevelNum(p) );
     fprintf( pTable, "    \"level_avg\" : %2.f,\n",  Gia_ManLevelAve(p) );
-    fprintf( pTable, "    \"cut\" : %d, %d,\n",     Gia_ManCrossCut(p, 0), Gia_ManCrossCut(p, 1));
+    fprintf( pTable, "    \"cut\" : %d,\n",     Gia_ManCrossCut(p, 0));
     fprintf( pTable, "    \"xor\" : %d,\n",          nXors );
     fprintf( pTable, "    \"xor_ratio\" : %6.2f,\n",    300.0*nXors/nTotal );
 
