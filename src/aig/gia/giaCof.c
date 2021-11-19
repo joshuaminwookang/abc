@@ -885,7 +885,7 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
     fprintf( pTable, "    \"fanout_max\" : %d,\n",   nFanoutsMax);
     fprintf( pTable, "    \"fanout_avg\" : %.2f,\n",   1.0*nFanoutsAll/Cof_ManNodeNum(p));
     fprintf( pTable, "    \"mffc_max\" : %d,\n",     nMffcsMax);
-    fprintf( pTable, "    \"mffc_avg\" : %.2f,\n",     1.0*nMffcsAll/nMffcsAll);
+    fprintf( pTable, "    \"mffc_avg\" : %.2f,\n"     1.0*nMffcsAll/nMffcsAll);
     Vec_IntFree( vFanins );
     Vec_IntFree( vFanouts );
     Vec_IntFree( vMffcs );

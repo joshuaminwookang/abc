@@ -566,11 +566,11 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     nTotal = Vec_IntSum( vCounts );
     assert( nTotal > 0 );
     fprintf( pTable, "    \"slack\" : {\n");
-    fprintf( pTable, "        \"total_nodes\" : %5d,\n",    nTotal);
     Vec_IntForEachEntry( vCounts, Entry, i )
     {
         fprintf( pTable, "        \"%d_%d\" : %5d,\n",    10*i, 10*(i+1), Entry);
     }
+    fprintf( pTable, "        \"total_nodes\" : %5d,\n",    nTotal);
     fprintf( pTable, "    }\n" );
     Vec_IntFree( vSlacks );
     Vec_IntFree( vCounts );
@@ -640,8 +640,8 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     }
     fprintf( pTable, "        \"size_avg\" : %.2f,\n",           1.0*SizeAll/(NodeAll ? NodeAll : 1) );
     fprintf( pTable, "        \"level\" : %5d,\n",          LevelMax );
-    fprintf( pTable, "        \"level_avg\" : %.2f,\n",     (float)Ave / Gia_ManCoNum(p) );
-    fprintf( pTable, "    },\n");
+    fprintf( pTable, "        \"level_avg\" : %.2f\n",     (float)Ave / Gia_ManCoNum(p) );
+    fprintf( pTable, "    }\n");
     fprintf( pTable, "}\n" );
     fclose( pTable );
 }
