@@ -838,56 +838,48 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
 
     // printf( "The distribution of fanins, fanouts. and MFFCs in the network:\n" );
     // printf( "         Number    Nodes with fanin   Nodes with fanout   Nodes with MFFC\n" );
+
+    //fanins
     fprintf( pTable, "    \"fanin\" : {\n");
+    int fanin_high_count = 0;
     for ( k = 0; k < nSizeMax; k++ )
     {
         if ( k < 10 )
             fprintf( pTable, "        \"%d\" : %11d,\n", k, vFanins->pArray[k]);
         else
-        {
-            if (k%10 == 0)
-                continue;
-            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            if (k == nSizeMax -1)
-                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
-            else 
-                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
-        }
+            fanin_high_count += vFanins->pArray[k];
     }
+    //(int)pow((double)10, k/10) * (k%10+1) - 1
+    sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1 ); 
+    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, fanin_high_count);
     fprintf( pTable, "    },\n");
+
+    //fanouts
     fprintf( pTable, "    \"fanout\" : {\n");
+    int fanout_high_count = 0;
     for ( k = 0; k < nSizeMax; k++ )
     {
         if ( k < 10 )
             fprintf( pTable, "        \"%d\" : %11d,\n", k, vFanouts->pArray[k]);
         else
-        {
-            if (k%10 == 0)
-                continue;
-            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            if (k == nSizeMax -1)
-                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
-            else
-                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
-        }
+            fanout_high_count += vFanouts->pArray[k];
     }
+    sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1 ); 
+    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, fanout_high_count);
     fprintf( pTable, "    },\n");
+
+    //mffc
+    int mffc_high_count = 0;
     fprintf( pTable, "    \"mffc\" : {\n");
     for ( k = 0; k < nSizeMax; k++ )
     {
         if ( k < 10 )
             fprintf( pTable, "        \"%d\" : %11d,\n", k, vMffcs->pArray[k]);
         else
-        {
-            if (k%10 == 0)
-                continue;
-            sprintf( Buffer, "%d_%d", (int)pow((double)10, k/10) * (k%10), (int)pow((double)10, k/10) * (k%10+1) - 1 ); 
-            if (k == nSizeMax -1)
-                fprintf( pTable, "        \"%s\" : %11d\n", Buffer, vFanins->pArray[k]);
-            else
-                fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, vFanins->pArray[k]);
-        }
+            mffc_high_count += vMffcs->pArray[k];
     }
+    sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1  ); 
+    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, mffc_high_count);
     fprintf( pTable, "    },\n");
     fprintf( pTable, "    \"fanin_max\" : %d,\n",    nFaninsMax);
     fprintf( pTable, "    \"fanin_avg\" : %.2f,\n",    1.0*nFaninsAll /Cof_ManNodeNum(p));

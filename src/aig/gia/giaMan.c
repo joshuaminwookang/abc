@@ -544,8 +544,11 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     /*
      * Write slack distribution
      */
-    Vec_Int_t * vCounts, * vSlacks = Gia_ManDfsSlacks( p );
     int i, Entry, nRange;
+     /*
+    Vec_Int_t * vCounts, * vSlacks = Gia_ManDfsSlacks( p );
+    int slack_threshold = 25;
+    int large_slack_count = 0;
     if ( Vec_IntSize(vSlacks) == 0 )
     {
         printf( "Network contains no internal objects.\n" );
@@ -566,14 +569,24 @@ void Gia_ManLogAigFullStats( Gia_Man_t * p, Gps_Par_t * pPars )
     nTotal = Vec_IntSum( vCounts );
     assert( nTotal > 0 );
     fprintf( pTable, "    \"slack\" : {\n");
+    int last_i = 0;
     Vec_IntForEachEntry( vCounts, Entry, i )
-    {
-        fprintf( pTable, "        \"%d_%d\" : %5d,\n",    10*i, 10*(i+1), Entry);
+    {   
+        if (i < slack_threshold || Entry > 0) 
+        {
+            fprintf( pTable, "        \"%d_%d\" : %5d,\n",    10*i, 10*(i+1), Entry);
+            last_i = i;
+        }
+        else 
+            large_slack_count += Entry;
     }
+    if (last_i < nRange) 
+        fprintf( pTable, "        \"%d_%d\" : %5d,\n",    last_i*10, nRange*10 , large_slack_count);
     fprintf( pTable, "        \"total_nodes\" : %5d\n",    nTotal);
     fprintf( pTable, "    },\n" );
     Vec_IntFree( vSlacks );
     Vec_IntFree( vCounts );
+    */
 
     // save LUT mapping and LUT distribution profile
     int fDisable2Lut = 1;
