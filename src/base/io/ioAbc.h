@@ -127,6 +127,7 @@ extern void               Io_WriteDotSeq( Abc_Ntk_t * pNtk, Vec_Ptr_t * vNodes, 
 extern void               Io_WriteEqn( Abc_Ntk_t * pNtk, char * pFileName );
 /*=== abcWriteGml.c ===========================================================*/
 extern void               Io_WriteGml( Abc_Ntk_t * pNtk, char * pFileName );
+extern void               Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName );
 /*=== abcWriteList.c ==========================================================*/
 extern void               Io_WriteList( Abc_Ntk_t * pNtk, char * pFileName, int fUseHost );
 /*=== abcWritePla.c ===========================================================*/

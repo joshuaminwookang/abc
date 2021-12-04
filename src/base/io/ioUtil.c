@@ -356,7 +356,7 @@ void Io_Write( Abc_Ntk_t * pNtk, char * pFileName, Io_FileType_t FileType )
     }
     if ( FileType == IO_FILE_GML )
     {
-        Io_WriteGml( pNtk, pFileName );
+        Io_WriteGmlNew( pNtk, pFileName );
         return;
     }
     if ( FileType == IO_FILE_BBLIF )
