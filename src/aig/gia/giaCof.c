@@ -851,7 +851,7 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
     }
     //(int)pow((double)10, k/10) * (k%10+1) - 1
     sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1 ); 
-    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, fanin_high_count);
+    fprintf( pTable, "        \"%s\" : %11d\n", Buffer, fanin_high_count);
     fprintf( pTable, "    },\n");
 
     //fanouts
@@ -865,7 +865,7 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
             fanout_high_count += vFanouts->pArray[k];
     }
     sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1 ); 
-    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, fanout_high_count);
+    fprintf( pTable, "        \"%s\" : %11d\n", Buffer, fanout_high_count);
     fprintf( pTable, "    },\n");
 
     //mffc
@@ -879,7 +879,7 @@ void Cof_ManPrintFanioDump( Cof_Man_t * p,  Gps_Par_t * pPars)
             mffc_high_count += vMffcs->pArray[k];
     }
     sprintf( Buffer, "%d_%d", 10, (int)pow((double)10, nSizeMax/10) * (nSizeMax%10+1) - 1  ); 
-    fprintf( pTable, "        \"%s\" : %11d,\n", Buffer, mffc_high_count);
+    fprintf( pTable, "        \"%s\" : %11d\n", Buffer, mffc_high_count);
     fprintf( pTable, "    },\n");
     fprintf( pTable, "    \"fanin_max\" : %d,\n",    nFaninsMax);
     fprintf( pTable, "    \"fanin_avg\" : %.2f,\n",    1.0*nFaninsAll /Cof_ManNodeNum(p));

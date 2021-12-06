@@ -143,10 +143,16 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
 
     // output the POs
     fprintf( pFile, "\n" );
+    //constant node
+    
     Abc_NtkForEachPo( pNtk, pObj, i )
     {
         fprintf( pFile, "    node [ id %5d label \"%s_PO\"\n", pObj->Id, Abc_ObjName(pObj) );
-        fprintf( pFile, "        graphics [ type \"triangle\" fill \"#00FFFF\" ]\n" );   // blue
+        //fprintf( pFile, "        graphics [ type \"triangle\" fill \"#00FFFF\" ]\n" );   // blue
+        fprintf( pFile, "        type %d \n",  Abc_ObjType(pObj));   // type
+        fprintf( pFile, "        level %d \n",  Abc_ObjLevel(pObj));   // type
+        fprintf( pFile, "        fanin %d \n",  Abc_ObjFaninNum(pObj));   // sum fanin
+        fprintf( pFile, "        fanout %d \n",  Abc_ObjFanoutNum(pObj));   // sum fanout
         fprintf( pFile, "    ]\n" );
     }
     // output the PIs
@@ -154,7 +160,10 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
     Abc_NtkForEachPi( pNtk, pObj, i )
     {
         fprintf( pFile, "    node [ id %5d label \"%s_PI\"\n", pObj->Id, Abc_ObjName(pObj) );
-        fprintf( pFile, "        graphics [ type \"triangle\" fill \"#00FF00\" ]\n" );   // green
+        fprintf( pFile, "        type %d \n",  Abc_ObjType(pObj));   // type
+        fprintf( pFile, "        level %d \n",  Abc_ObjLevel(pObj));   // type
+        fprintf( pFile, "        fanin %d \n",  Abc_ObjFaninNum(pObj));   // sum fanin
+        fprintf( pFile, "        fanout %d \n",  Abc_ObjFanoutNum(pObj));   // sum fanout
         fprintf( pFile, "    ]\n" );
     }
     // output the latches
@@ -162,7 +171,10 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
     Abc_NtkForEachLatch( pNtk, pObj, i )
     {
         fprintf( pFile, "    node [ id %5d label \"%s_Latch\"\n", pObj->Id, Abc_ObjName(pObj) );
-        fprintf( pFile, "        graphics [ type \"rectangle\" fill \"#FF0000\" ]\n" );   // red
+        fprintf( pFile, "        type %d \n",  Abc_ObjType(pObj));   // type
+        fprintf( pFile, "        level %d \n",  Abc_ObjLevel(pObj));   // type
+        fprintf( pFile, "        fanin %d \n",  Abc_ObjFaninNum(pObj));   // sum fanin
+        fprintf( pFile, "        fanout %d \n",  Abc_ObjFanoutNum(pObj));   // sum fanout
         fprintf( pFile, "    ]\n" );
     }
     // output the nodes
@@ -170,7 +182,10 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
     Abc_NtkForEachNode( pNtk, pObj, i )
     {
         fprintf( pFile, "    node [ id %5d label \"%s_Node\"\n", pObj->Id, Abc_ObjName(pObj) );
-        fprintf( pFile, "        graphics [ type \"ellipse\" fill \"#CCCCFF\" ]\n" );     // grey
+        fprintf( pFile, "        type %d \n",  Abc_ObjType(pObj));   // type
+        fprintf( pFile, "        level %d \n",  Abc_ObjLevel(pObj));   // type
+        fprintf( pFile, "        fanin %d \n",  Abc_ObjFaninNum(pObj));   // sum fanin
+        fprintf( pFile, "        fanout %d \n",  Abc_ObjFanoutNum(pObj));   // sum fanout
         fprintf( pFile, "    ]\n" );
     }
 
@@ -181,11 +196,10 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
         Abc_ObjForEachFanin( pObj, pFanin, k )
         {
             fprintf( pFile, "    edge [ source %5d   target %5d\n", pObj->Id, pFanin->Id );
-            fprintf( pFile, "        graphics [ type \"line\" arrow \"first\" ]\n" );
+            // fprintf( pFile, "        graphics [ type \"line\" arrow \"first\" ]\n" );
             fprintf( pFile, "    ]\n" );
         }
     }
-
     fprintf( pFile, "]\n" );
     fprintf( pFile, "\n" );
     fclose( pFile );

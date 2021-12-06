@@ -2018,7 +2018,7 @@ int IoCommandWriteBench( Abc_Frame_t * pAbc, int argc, char **argv )
         Abc_Ntk_t * pNtkTemp;
         pNtkTemp = Abc_NtkToNetlist( pAbc->pNtkCur );
         Abc_NtkToAig( pNtkTemp );
-        Io_WriteBenchLut( pNtkTemp, pFileName );
+        Io_WriteBench( pNtkTemp, pFileName );
         Abc_NtkDelete( pNtkTemp );
     }
     else
