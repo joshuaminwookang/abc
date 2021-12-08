@@ -140,7 +140,6 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
     FILE * pFile;
     Abc_Obj_t * pObj, * pFanin;
     int i, k;
-
     assert( Abc_NtkIsStrash(pNtk) || Abc_NtkIsLogic(pNtk)  );
 
     // start the output stream
@@ -151,12 +150,25 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
         return;
     }
     fprintf( pFile, "# GML for \"%s\" written by ABC on %s\n", pNtk->pName, Extra_TimeStamp() );
+    fprintf( pFile, "# This is a netlist: %d , logic %d, has mapping: %d or aig %d\n",Abc_NtkIsNetlist(pNtk), Abc_NtkIsLogic(pNtk), Abc_NtkHasMapping(pNtk), Abc_NtkHasAig(pNtk));
     fprintf( pFile, "graph [\n" );
 
+    // output constant node in the AIG if it has fanouts
+    if ( Abc_NtkIsStrash(pNtk) )
+    {
+        pObj = Abc_AigConst1( pNtk );
+        if ( Abc_ObjFanoutNum(pObj) > 0 )
+        {
+            fprintf( pFile, "\n" );
+            fprintf( pFile, "    node [ id %5d label \"%s\"\n", pObj->Id, Abc_ObjName(pObj) );
+            fprintf( pFile, "        type %d \n",  Abc_ObjType(pObj));   // type
+            fprintf( pFile, "        level %d \n",  Abc_ObjLevel(pObj));   // type
+            fprintf( pFile, "        fanin %d \n",  Abc_ObjFaninNum(pObj));   // sum fanin
+            fprintf( pFile, "        fanout %d \n",  Abc_ObjFanoutNum(pObj));   // sum fanout
+            fprintf( pFile, "    ]\n" );
+        }
+    }
     // output the POs
-    fprintf( pFile, "\n" );
-    //constant node
-    
     Abc_NtkForEachPo( pNtk, pObj, i )
     {
         fprintf( pFile, "    node [ id %5d label \"%s_PO\"\n", pObj->Id, Abc_ObjName(pObj) );
@@ -205,10 +217,14 @@ void Io_WriteGmlNew( Abc_Ntk_t * pNtk, char * pFileName )
     fprintf( pFile, "\n" );
     Abc_NtkForEachObj( pNtk, pObj, i )
     {
-        Abc_ObjForEachFanin( pObj, pFanin, k )
+        for ( k = 0; (k < Abc_ObjFaninNum(pObj)) && (((pFanin) = Abc_ObjFanin(pObj, k)), 1); k++ )
         {
             fprintf( pFile, "    edge [ source %5d   target %5d\n", pObj->Id, pFanin->Id );
-            // fprintf( pFile, "        graphics [ type \"line\" arrow \"first\" ]\n" );
+            if (k==0) {
+                fprintf( pFile, "        invert %d \n",  pObj->fCompl0);   // inv or not
+            } else {
+                fprintf( pFile, "        invert %d \n",  pObj->fCompl1);   // inv or not
+            }
             fprintf( pFile, "    ]\n" );
         }
     }
