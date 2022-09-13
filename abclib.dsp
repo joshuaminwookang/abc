@@ -5155,6 +5155,10 @@ SOURCE=.\src\aig\gia\giaResub3.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\aig\gia\giaResub6.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\aig\gia\giaRetime.c
 # End Source File
 # Begin Source File
@@ -5187,6 +5191,10 @@ SOURCE=.\src\aig\gia\giaSatoko.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\aig\gia\giaSatSyn.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\aig\gia\giaScl.c
 # End Source File
 # Begin Source File
@@ -5208,6 +5216,10 @@ SOURCE=.\src\aig\gia\giaShrink6.c
 # Begin Source File
 
 SOURCE=.\src\aig\gia\giaShrink7.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\aig\gia\giaSif.c
 # End Source File
 # Begin Source File
 
